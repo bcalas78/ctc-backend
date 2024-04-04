@@ -22,8 +22,8 @@ class AuthController extends Controller
     {
         //Validation des données
         $validator = Validator::make($request->all(), [
-            'firstname' => 'required|string|max:255',
-            'lastname' => 'required|string|max:255',
+            'firstname' => 'required|string|max:60',
+            'lastname' => 'required|string|max:80',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => [
                 'required',
@@ -53,6 +53,7 @@ class AuthController extends Controller
             'email' => $request->input('email'),
             'password' => $hashedPassword,
             'avatar' => $request->input('avatar'),
+            "created_at" => now(),
             // 'email_verified_token' => Str::random(60),
         ]);
 
@@ -90,14 +91,18 @@ class AuthController extends Controller
     public function sendPasswordResetMail(Request $request)
     {
         $validatedData = $request->validate(['email' => 'required|email']);
+
         $registeredUser = User::where('email', $validatedData['email'])->first();
+        
         if ($registeredUser) {
             $token = Str::random(60);
             DB::table('password_reset_tokens')->updateOrInsert(
                 ['email' => $registeredUser->email],
                 ['token' => Hash::make($token), 'created_at' => now()]
             );
+
             Mail::to($registeredUser->email)->send(new PasswordResetMail($token));
+            
             return response()->json([
                 'status' => 250,
                 'message' => 'Email envoyé',
@@ -110,14 +115,19 @@ class AuthController extends Controller
     public function resetPassword(PasswordResetRequest $request)
     {
         $data = $request->validated();
+
         $passwordReset = DB::table('password_reset_tokens')->where('email', $data['email'])->first();
+
         if (!$passwordReset || !Hash::check($data['token'], $passwordReset->token)) {
             return response()->json(['error' => 'Token non valide.'], 400);
         }
+
         $user = User::where('email', $data['email'])->first();
         $user->password = Hash::make($data['password']);
         $user->save();
+
         DB::table('password_reset_tokens')->where('email', $request['email'])->delete();
+
         return response()->json([
             'status' => 200,
             'message' => 'Votre mot de passe a été réinitialisé avec succès !'

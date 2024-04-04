@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Permission extends Model
 {
+    public $timestamps = true;
+    
     /**
      * The attributes that are mass assignable.
      *
