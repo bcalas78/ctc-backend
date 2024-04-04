@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Game extends Model
 {
+    public $timestamps = true;
+    
     /**
      * The attributes that are mass assignable.
      *

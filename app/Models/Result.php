@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Result extends Model
 {
+    public $timestamps = true;
+    
     /**
      * The attributes that are mass assignable.
      *

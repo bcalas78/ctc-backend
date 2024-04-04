@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Team extends Model
 {
+    public $timestamps = true;
+
     /**
      * The attributes that are mass assignable.
      *

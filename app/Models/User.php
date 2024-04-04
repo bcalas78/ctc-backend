@@ -16,7 +16,7 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    public $timestamps = false;
+    public $timestamps = true;
 
     /**
      * The attributes that are mass assignable.
@@ -93,6 +93,21 @@ class User extends Authenticatable implements MustVerifyEmail
         }
     }
 
+    public function hasPermission(string $permissionName): bool
+    {
+        $roles = $this->roles()->with('permissions')->get();
+
+        foreach ($roles as $role) {
+            foreach ($role->permissions as $permission) {
+                if ($permission->name === $permissionName) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     public function getAvatarUrlAttribute()
     {
         if ($this->avatar) {
@@ -103,13 +118,13 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     public function assignRole($role)
-{
-    $existingRole = Role::where('name', $role)->first();
+    {
+        $existingRole = Role::where('name', $role)->first();
 
-    if ($existingRole) {
-        $this->roles()->attach($existingRole->id);
-    } else {
-        return response()->json(['error' => "Le rôle n'existe pas"], 404);
+        if ($existingRole) {
+            $this->roles()->attach($existingRole->id);
+        } else {
+            return response()->json(['error' => "Le rôle n'existe pas"], 404);
+        }
     }
-}
 }

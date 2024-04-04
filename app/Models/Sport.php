@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Sport extends Model
 {
+    public $timestamps = true;
+    
     /**
      * The attributes that are mass assignable.
      *
