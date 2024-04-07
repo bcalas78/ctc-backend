@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ChampionshipController;
+use App\Http\Controllers\GameController;
 use App\Http\Controllers\SportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -56,4 +57,46 @@ Route::controller(ChampionshipController::class)->group(function () {
 
 Route::get('/sports', [SportController::class, 'getAllSports']);
 
+Route::controller(GameController::class)->group(function () {
+    Route::get('/games/{id}', 'getGamesTeamsResultsByChampionship');
+    Route::get('/games/game/{id}', 'getGameById');
+    Route::post('/game', 'createGame')->middleware('auth:sanctum', 'role:dirigeant', 'permission:dirigeant_create_game');
+    Route::patch('/game/{id}', 'updateGame')->middleware('auth:sanctum', 'role:dirigeant', 'permission:dirigeant_update_game');
+    Route::delete('/game/{id}', 'deleteGameById')->middleware('auth:sanctum', 'role:dirigeant', 'permission:dirigeant_delete_game');
+});
+
+
+
+
+
+
+
+
+// Route::get('/dashboard', function () {
+// })->middleware('auth:sanctum', 'permission:joueur_access_dashboard');
+
+// Route::group(['middleware' => 'role:dirigeant'], function () {
+//     // Routes accessibles uniquement par les dirigeants
+// });
+
+// Route::group(['middleware' => 'role:joueur'], function () {
+//     // Routes accessibles uniquement par les joueurs
+// });
+
+
+
+// // Page Profil (accessible à tous les utilisateurs authentifiés)
+// Route::get('/profil', function () {
+//     // Contenu de la page de profil
+// })->middleware('auth');
+
+// // Page Dashboard (accessible aux joueurs et aux dirigeants)
+// Route::get('/dashboard', function () {
+//     // Contenu du tableau de bord
+// })->middleware(['auth', 'role:player,manager']);
+
+// // Créer un Championnat (accessible uniquement aux dirigeants)
+// Route::get('/creer-championnat', function () {
+//     // Contenu de la page de création de championnat
+// })->middleware(['auth', 'permission:create_championship']);
 
