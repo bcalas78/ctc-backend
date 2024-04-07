@@ -19,9 +19,9 @@ class Game extends Model
     protected $fillable = [
         'number_teams',
         'game_date',
-        'game-time',
+        'game_time',
         'place',
-        'adress',
+        'address',
         'postal_code',
         'city',
         'user_id',
