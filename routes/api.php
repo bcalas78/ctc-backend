@@ -5,6 +5,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ChampionshipController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\SportController;
+use App\Http\Controllers\ResultController;
+use App\Http\Controllers\TeamController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -60,43 +62,36 @@ Route::get('/sports', [SportController::class, 'getAllSports']);
 Route::controller(GameController::class)->group(function () {
     Route::get('/games/{id}', 'getGamesTeamsResultsByChampionship');
     Route::get('/games/game/{id}', 'getGameById');
+    Route::get('/games/team_results/{id}', 'getTeamsResultsByGame');
     Route::post('/game', 'createGame')->middleware('auth:sanctum', 'role:dirigeant', 'permission:dirigeant_create_game');
     Route::patch('/game/{id}', 'updateGame')->middleware('auth:sanctum', 'role:dirigeant', 'permission:dirigeant_update_game');
     Route::delete('/game/{id}', 'deleteGameById')->middleware('auth:sanctum', 'role:dirigeant', 'permission:dirigeant_delete_game');
 });
 
+Route::controller(ResultController::class)->group(function () {
+    Route::middleware('auth:sanctum', 'role:dirigeant')->group(function () {
+        Route::get('/result/{id}', 'getResultById');
+        Route::post('/result', 'createResult')->middleware('permission:dirigeant_add_result');
+        Route::patch('/result/{id}', 'updateResult')->middleware('permission:dirigeant_update_result');
+        Route::delete('/result/{id}', 'deleteResultById')->middleware('permission:dirigeant_delete_result');
+    });
+});
 
-
-
-
-
-
-
-// Route::get('/dashboard', function () {
-// })->middleware('auth:sanctum', 'permission:joueur_access_dashboard');
-
-// Route::group(['middleware' => 'role:dirigeant'], function () {
-//     // Routes accessibles uniquement par les dirigeants
-// });
-
-// Route::group(['middleware' => 'role:joueur'], function () {
-//     // Routes accessibles uniquement par les joueurs
-// });
-
-
-
-// // Page Profil (accessible à tous les utilisateurs authentifiés)
-// Route::get('/profil', function () {
-//     // Contenu de la page de profil
-// })->middleware('auth');
-
-// // Page Dashboard (accessible aux joueurs et aux dirigeants)
-// Route::get('/dashboard', function () {
-//     // Contenu du tableau de bord
-// })->middleware(['auth', 'role:player,manager']);
-
-// // Créer un Championnat (accessible uniquement aux dirigeants)
-// Route::get('/creer-championnat', function () {
-//     // Contenu de la page de création de championnat
-// })->middleware(['auth', 'permission:create_championship']);
+Route::controller(TeamController::class)->group(function () {
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/teams', 'getAllTeams')->middleware('role:joueur', 'permission:joueur_research_team');
+        Route::get('/championship-teams/{id}', 'getTeamsByChampionship');
+        Route::get('/team-players/{id}', 'getPlayersByTeam');
+        Route::get('/user-teams', 'getTeamsByUser');
+        Route::get('/status', 'getAllStatusByUser')->middleware('role:joueur');
+        Route::get('/status-pending', 'getAllStatusPending')->middleware('role:dirigeant');
+        Route::post('/join-team/{id}', 'joinTeam')->middleware('role:joueur', 'permission:joueur_request_to_join_team');
+        Route::post('/accept-player/{playerId}/team/{teamId}', 'acceptPlayerRequestInTeam')->middleware('role:dirigeant', 'permission:dirigeant_accept_player_in_team');
+        Route::post('/reject-player/{playerId}/team/{teamId}', 'rejectPlayerRequestInTeam')->middleware('role:dirigeant', 'permission:dirigeant_rejected_player_in_team');
+        Route::post('/team', 'createTeam')->middleware('role:dirigeant', 'permission:dirigeant_create_team');
+        Route::patch('/team/{id}', 'updateTeam')->middleware('role:dirigeant', 'permission:dirigeant_update_team');
+        Route::patch('/team/{teamId}/player/{playerId}', 'updatePlayerStatusInTeam')->middleware('role:dirigeant', 'permission:dirigeant_delete_player_in_team');
+        Route::delete('/team/{id}', 'deleteTeamById')->middleware('role:dirigeant', 'permission:dirigeant_delete_team');
+    });
+});
 
