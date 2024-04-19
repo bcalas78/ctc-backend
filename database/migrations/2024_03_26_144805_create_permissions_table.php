@@ -32,6 +32,7 @@ return new class extends Migration
             'dirigeant_update_team',
             'dirigeant_delete_team',
             'dirigeant_accept_player_in_team',
+            'dirigeant_rejected_player_in_team',
             'dirigeant_delete_player_in_team',
             'dirigeant_add_result',
             'dirigeant_update_result',

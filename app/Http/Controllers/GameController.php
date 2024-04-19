@@ -28,6 +28,7 @@ class GameController extends Controller
                     'games.game_date',
                     'games.game_time',
                     'games.number_teams',
+                    'teams.id as teamId',
                     'teams.name as team_name',
                     'results.team_score',
                     'results.note'
@@ -38,23 +39,55 @@ class GameController extends Controller
         } catch (\Exception $e) {
             return response()->json(['message' => 'Une erreur est survenue lors de la récupération des matchs du championnat.','error' => $e->getMessage()], 500);
         } 
+    }
 
-        // try{
-        //     $championships = Championship::findOrFail($championshipId);
+    public function getTeamsResultsByGame($gameId)
+    {
+        try {
+            $game = Game::findOrFail($gameId);
 
-        //     $games = Game::where('championship_id', $championshipId)->get();
+            $results = Result::where('game_id', $gameId)->get();
 
-        //     return response()->json($games);
+            $teams = DB::table('teams')
+            ->join('team_game', 'teams.id', '=', 'team_game.team_id')
+            ->select('teams.id', 'teams.name')
+            ->where('team_game.game_id', $gameId)
+            ->get();
 
-        // } catch (\Exception $e) {
-        //     return response()->json(['error' => 'Une erreur est survenue lors de la récupération des matchs du championnat.'], 500);
-        // } 
+        $teamsResults = [];
+
+        foreach ($teams as $team) {
+            $result = $results->firstWhere('team_id', $team->id);
+
+            if ($result) {
+                $teamsResults[] = [
+                    'id' => $team->id,
+                    'name' => $team->name,
+                    'result_id' => $result->id,
+                    'team_score' => $result->team_score,
+                    'note' => $result->note,
+                ];
+            } else {
+                $teamsResults[] = [
+                    'id' => $team->id,
+                    'name' => $team->name,
+                    'result_id' => null,
+                    'team_score' => null,
+                    'note' => null,
+                ];
+            }
+        }
+
+            return response()->json($teamsResults);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Une erreur est survenue lors de la récupération des équipes et de leurs résultat pour ce match.','error' => $e->getMessage()], 500);
+        } 
     }
 
     public function getGameById($gameId)
     {
         try {
-            $game = Game::findOrFail($gameId);
+            $game = Game::with('teams')->findOrFail($gameId);
 
             return response()->json($game);
         } catch (\Exception $e) {
@@ -76,6 +109,7 @@ class GameController extends Controller
                 'postal_code' => 'nullable|string',
                 'city' => 'required|string',
                 'championship_id' => 'required|integer',
+                'teams' => 'required|array'
             ]);
 
             $game = Game::create([
@@ -89,6 +123,17 @@ class GameController extends Controller
                 'user_id' => $userId,
                 'championship_id' => $validatedData['championship_id'],
             ]);
+
+            $teams = $validatedData['teams'];
+
+            // if (count($teams) !== $validatedData['number_teams']) {
+            //     throw new \Exception("Le nombre d'équipes fourni ne correspond pas au nombre d'équipes attendu.");
+            // }
+
+            foreach ($teams as $team) {
+                $teamId = $team['id'];
+                $game->teams()->attach($teamId);
+            }
 
             return response()->json(['message' => 'Match créé avec succès', 'game' => $game], 201);
         } catch (\Exception $e) {
@@ -107,14 +152,24 @@ class GameController extends Controller
                 'address' => 'nullable|string',
                 'postal_code' => 'nullable|string',
                 'city' => 'required|string',
+                'teams' => 'required|array'
             ]);
 
             $game = Game::findOrFail($id);
 
             $game->update($validatedData);
 
+            $teams = $validatedData['teams'];
+
+            $game->teams()->detach();
+
+            foreach ($teams as $team) {
+                $teamId = $team['id'];
+                $game->teams()->attach($teamId);
+            }
+
             return response()->json([
-                'message' => 'Le match a été mis à jour avec succès !', $game
+                'message' => 'Le match a été mis à jour avec succès !', $teams
             ], 200);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'Match non trouvé', 'error'], 404);
@@ -134,7 +189,7 @@ class GameController extends Controller
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'Match non trouvé', 'error'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Erreur lors de la suppression du match', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Erreur lors de la suppression du match'], 500);
         }
     }   
 }
